@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Payment Items Table - Refined Financial Premium */
+        #payment-items-table {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .payment-items-table-container {
+            background: #FFFFFF;
+            border: 1.5px solid #E2E8F0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .payment-items-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .payment-items-table thead th {
+            padding: 12px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748B;
+            text-align: left;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: #FAFBFC;
+            border-bottom: 1.5px solid #E2E8F0;
+        }
+
+        .payment-items-table tbody tr {
+            transition: background-color 0.15s ease;
+        }
+
+        .payment-items-table tbody tr:hover {
+            background: #FAFBFC;
+        }
+
+        .payment-items-table tbody td {
+            padding: 14px 16px;
+            font-size: 14px;
+            color: #0F172A;
+            border-bottom: 1px solid #F1F5F9;
+            vertical-align: middle;
+        }
+
+        .payment-items-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .payment-date-cell {
+            font-weight: 500;
+            color: #0F172A;
+            white-space: nowrap;
+        }
+
+        .payment-payee-cell {
+            font-weight: 500;
+            color: #0F172A;
+        }
+
+        .payment-amount-cell {
+            font-family: 'JetBrains Mono', 'SF Mono', 'Monaco', 'Courier New', monospace;
+            font-weight: 600;
+            color: #0F172A;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .payment-amount-cell .currency-code {
+            font-size: 11px;
+            font-weight: 600;
+            color: #94A3B8;
+            margin-right: 6px;
+            letter-spacing: 0.05em;
+        }
+
+        .payment-amount-cell .amount-value {
+            font-weight: 600;
+            color: #0F172A;
+        }
+
+        .payment-notes-cell {
+            color: #64748B;
+            font-size: 13px;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .payment-notes-cell.empty {
+            color: #CBD5E1;
+            font-style: italic;
+        }
+
+        /* Empty State */
+        .payment-items-empty-state {
+            padding: 48px 20px;
+            text-align: center;
+        }
+
+        .payment-items-empty-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #94A3B8;
+        }
+
+        .payment-items-empty-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #0F172A;
+            margin: 0 0 6px 0;
+        }
+
+        .payment-items-empty-text {
+            font-size: 13px;
+            color: #64748B;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Payment Items Table Fragment -->
+    <div th:fragment="payment-items-table" id="payment-items-table">
+
+        <!-- Empty State -->
+        <div th:if="${paymentPeriod.paymentItems.empty}" class="payment-items-table-container">
+            <div class="payment-items-empty-state">
+                <div class="payment-items-empty-icon">
+                    <i class="bi bi-receipt"></i>
+                </div>
+                <h3 class="payment-items-empty-title">No payment items yet</h3>
+                <p class="payment-items-empty-text">
+                    Click "Edit Period" to add payment items for this period
+                </p>
+            </div>
+        </div>
+
+        <!-- Table with Data -->
+        <div th:unless="${paymentPeriod.paymentItems.empty}" class="payment-items-table-container">
+            <table class="payment-items-table">
+                <thead>
+                    <tr>
+                        <th>Payee</th>
+                        <th>Amount</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item : ${paymentPeriod.paymentItems}">
+                        <td class="payment-payee-cell">
+                            <span th:text="${item.payee.name}">Electric Company</span>
+                        </td>
+                        <td class="payment-amount-cell">
+                            <span class="currency-code" th:text="${item.amount.currency.currencyCode}">USD</span>
+                            <span class="amount-value" th:text="${#numbers.formatDecimal(item.amount.number, 1, 2)}">150.00</span>
+                        </td>
+                        <td class="payment-notes-cell"
+                            th:classappend="${item.notes == null or item.notes.isEmpty()} ? 'empty' : ''">
+                            <span th:text="${item.notes != null and !item.notes.isEmpty()} ? ${item.notes} : '—'">
+                                Monthly payment
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <!-- Payment Item Row Fragment -->
+    <div th:fragment="payment-item-row" class="payment-item-row" th:attr="data-index=${index}">
+
+        <!-- Hidden field to mark this as a NEW item (originalIndex = -1) -->
+        <input type="hidden" name="originalIndex" value="-1" th:attr="data-index=${index}">
+
+        <!-- Payee Combo Field -->
+        <div class="form-group">
+            <label class="form-label" th:for="'payee-' + ${index}">Payee</label>
+            <div class="payee-combo-wrapper" th:attr="data-index=${index}">
+                <input type="text"
+                       th:id="'payee-input-' + ${index}"
+                       class="form-control payee-combo-input"
+                       placeholder="Select or type payee name..."
+                       autocomplete="off"
+                       required
+                       th:attr="data-index=${index}">
+                <i class="bi bi-chevron-down payee-combo-icon" tabindex="-1" aria-hidden="true"></i>
+
+                <!-- Hidden fields for form submission -->
+                <input type="hidden"
+                       th:id="'payeeId-' + ${index}"
+                       name="payeeId"
+                       th:attr="data-index=${index}"
+                       tabindex="-1">
+                <input type="hidden"
+                       th:id="'payeeName-' + ${index}"
+                       name="payeeName"
+                       th:attr="data-index=${index}"
+                       tabindex="-1">
+
+                <!-- Dropdown -->
+                <div class="payee-dropdown" th:attr="data-index=${index}" tabindex="-1">
+                    <div class="payee-dropdown-list" tabindex="-1">
+                        <!-- Populated dynamically by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Amount -->
+        <div class="form-group">
+            <label class="form-label" th:for="'amount-' + ${index}">Amount</label>
+            <input type="number"
+                   th:id="'amount-' + ${index}"
+                   name="amount"
+                   class="form-control"
+                   step="0.01"
+                   placeholder="0.00"
+                   required>
+        </div>
+
+        <!-- Notes -->
+        <div class="form-group">
+            <label class="form-label" th:for="'notes-' + ${index}">Notes</label>
+            <input type="text"
+                   th:id="'notes-' + ${index}"
+                   name="notes"
+                   class="form-control"
+                   placeholder="Optional notes...">
+        </div>
+
+        <!-- Remove Button -->
+        <div class="form-group">
+            <button type="button"
+                    class="btn-remove-item"
+                    tabindex="-1"
+                    onclick="confirmRemovePaymentItemRow(this)"
+                    title="Remove item"
+                    aria-label="Remove this payment item">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- No script needed - initialization handled by form.html's initializePayeeComboForRow() -->
+</body>
+</html>

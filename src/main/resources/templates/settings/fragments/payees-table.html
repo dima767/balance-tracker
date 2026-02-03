@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <!-- Payees Table Fragment -->
+    <div th:fragment="payees-table" id="payees-table-wrapper" class="payees-table-container">
+        <!-- Error Message (hidden - will be shown in modal via JavaScript) -->
+        <div th:if="${error}" class="alert alert-error" th:text="${error}" style="display: none;" data-error-message="true"></div>
+
+        <!-- Table with Data -->
+        <table class="payees-table" th:if="${payees != null and !payees.isEmpty()}">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Created</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="payee : ${payees}">
+                    <td>
+                        <span class="payee-name" th:text="${payee.name}">Electric Company</span>
+                    </td>
+                    <td>
+                        <span class="payee-date"
+                              th:text="${#temporals.format(payee.createdAt, 'MMM dd, yyyy')}">
+                            Jan 15, 2024
+                        </span>
+                    </td>
+                    <td>
+                        <div class="payee-actions">
+                            <button type="button"
+                                    class="btn-icon btn-edit"
+                                    tabindex="-1"
+                                    title="Edit payee"
+                                    aria-label="Edit payee"
+                                    th:attr="data-payee-id=${payee.id},data-payee-name=${payee.name}"
+                                    onclick="editPayee(this)">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button type="button"
+                                    class="btn-icon btn-delete"
+                                    tabindex="-1"
+                                    title="Delete payee"
+                                    aria-label="Delete payee"
+                                    th:attr="data-payee-id=${payee.id},data-payee-name=${payee.name},data-delete-url=${'/balancetracker/settings/payees/' + payee.id}"
+                                    onclick="confirmDeletePayee(this)">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Empty State -->
+        <div class="empty-state" th:if="${payees == null or payees.isEmpty()}">
+            <div class="empty-state-icon">
+                <i class="bi bi-people"></i>
+            </div>
+            <h3 class="empty-state-title">No payees yet</h3>
+            <p class="empty-state-text">
+                Add your first payee using the form above to start tracking payments
+            </p>
+        </div>
+    </div>
+</body>
+</html>

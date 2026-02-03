@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title layout:title-pattern="$CONTENT_TITLE - $LAYOUT_TITLE">Balance Tracker</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+
+    <!-- Bootstrap 5.3.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link th:href="@{/css/styles.css}" rel="stylesheet">
+
+    <!-- htmx 2.0.3 -->
+    <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="bi bi-wallet2"></i>
+                    <span>Balance Tracker</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a th:href="@{/}" class="nav-item">
+                    <i class="bi bi-house-door"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a th:href="@{/payment-periods}" class="nav-item">
+                    <i class="bi bi-calendar-check"></i>
+                    <span>Payment Periods</span>
+                </a>
+                <a th:href="@{/reports}" class="nav-item">
+                    <i class="bi bi-graph-up"></i>
+                    <span>Reports</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a th:href="@{/settings}" class="nav-item">
+                    <i class="bi bi-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content" id="main-content">
+            <div layout:fragment="content">
+                <!-- Page content will be inserted here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal System -->
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+        <div class="modal-container">
+            <div class="modal-header">
+                <button class="modal-close" onclick="closeModal('editModal')" aria-label="Close modal">
+                    <i class="bi bi-x"></i>
+                </button>
+                <h3 id="editModalTitle" class="modal-title">Edit Item</h3>
+            </div>
+            <div class="modal-body">
+                <form id="editModalForm" onsubmit="handleEditSubmit(event)">
+                    <div class="form-group">
+                        <label for="editModalInput" class="form-label">Name</label>
+                        <input type="text"
+                               id="editModalInput"
+                               class="form-control modal-input"
+                               required
+                               autocomplete="off"
+                               placeholder="Enter name">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
+                <button type="submit" form="editModalForm" class="btn btn-primary">
+                    <i class="bi bi-check-lg"></i>
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirmModalMessage">
+        <div class="modal-container confirm-modal">
+            <div class="modal-header">
+                <div class="modal-icon modal-icon-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+            </div>
+            <div class="modal-body">
+                <p id="confirmModalMessage" class="confirm-message">Are you sure you want to proceed?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('confirmModal')">Cancel</button>
+                <button type="button" id="confirmModalButton" class="btn btn-danger" onclick="handleConfirmAction()">
+                    <i class="bi bi-trash"></i>
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Modal System JavaScript -->
+    <script>
+        // Modal state management
+        let modalState = {
+            editCallback: null,
+            confirmCallback: null,
+            previousFocus: null
+        };
+
+        // Open modal
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+
+            // Store the currently focused element
+            modalState.previousFocus = document.activeElement;
+
+            // Open modal
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // Focus first input or button
+            setTimeout(() => {
+                const firstInput = modal.querySelector('input, button[type="submit"]');
+                if (firstInput) firstInput.focus();
+            }, 100);
+
+            // Setup focus trap
+            setupFocusTrap(modal);
+        }
+
+        // Close modal
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+
+            // Restore focus
+            if (modalState.previousFocus) {
+                modalState.previousFocus.focus();
+                modalState.previousFocus = null;
+            }
+
+            // Clear callbacks
+            if (modalId === 'editModal') {
+                modalState.editCallback = null;
+                document.getElementById('editModalForm').reset();
+            } else if (modalId === 'confirmModal') {
+                modalState.confirmCallback = null;
+            }
+        }
+
+        // Focus trap for accessibility
+        function setupFocusTrap(modal) {
+            const focusableElements = modal.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            );
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+
+            modal.addEventListener('keydown', function(e) {
+                if (e.key !== 'Tab') return;
+
+                if (e.shiftKey) {
+                    if (document.activeElement === firstElement) {
+                        lastElement.focus();
+                        e.preventDefault();
+                    }
+                } else {
+                    if (document.activeElement === lastElement) {
+                        firstElement.focus();
+                        e.preventDefault();
+                    }
+                }
+            });
+        }
+
+        // Edit Modal
+        function openEditModal(title, currentValue, callback) {
+            const modal = document.getElementById('editModal');
+            const titleEl = document.getElementById('editModalTitle');
+            const input = document.getElementById('editModalInput');
+            const label = modal.querySelector('.form-label');
+
+            titleEl.textContent = title;
+            label.textContent = title.replace('Edit ', '');
+            input.value = currentValue;
+            modalState.editCallback = callback;
+
+            openModal('editModal');
+        }
+
+        function handleEditSubmit(event) {
+            event.preventDefault();
+            const input = document.getElementById('editModalInput');
+            const value = input.value.trim();
+
+            if (value && modalState.editCallback) {
+                modalState.editCallback(value);
+            }
+
+            closeModal('editModal');
+        }
+
+        // Confirmation Modal
+        function openConfirmModal(message, confirmText, callback, isDanger = true, showCancel = true) {
+            const modal = document.getElementById('confirmModal');
+            const messageEl = document.getElementById('confirmModalMessage');
+            const button = document.getElementById('confirmModalButton');
+            const cancelButton = modal.querySelector('.btn-secondary');
+            const iconEl = modal.querySelector('.modal-icon');
+
+            messageEl.textContent = message;
+            button.innerHTML = confirmText;
+            modalState.confirmCallback = callback;
+
+            // Show/hide Cancel button
+            if (cancelButton) {
+                cancelButton.style.display = showCancel ? 'inline-flex' : 'none';
+            }
+
+            // Update button style
+            button.className = 'btn ' + (isDanger ? 'btn-danger' : 'btn-primary');
+
+            // Update icon style
+            if (isDanger) {
+                iconEl.className = 'modal-icon modal-icon-warning';
+                iconEl.innerHTML = '<i class="bi bi-exclamation-triangle"></i>';
+            } else {
+                iconEl.className = 'modal-icon modal-icon-info';
+                iconEl.innerHTML = '<i class="bi bi-info-circle"></i>';
+            }
+
+            openModal('confirmModal');
+        }
+
+        function handleConfirmAction() {
+            if (modalState.confirmCallback) {
+                modalState.confirmCallback();
+            }
+            closeModal('confirmModal');
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const activeModal = document.querySelector('.modal-overlay.active');
+                if (activeModal) {
+                    closeModal(activeModal.id);
+                }
+            }
+        });
+
+        // Close modal on backdrop click
+        document.querySelectorAll('.modal-overlay').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeModal(modal.id);
+                }
+            });
+        });
+
+        // Global delete confirmation handlers
+        function confirmDeletePaymentPeriod(button) {
+            const deleteUrl = button.getAttribute('data-delete-url');
+            const targetId = button.getAttribute('data-target') || '#main-content';
+
+            openConfirmModal(
+                'Are you sure you want to delete this payment period? All payment items will be deleted as well.',
+                '<i class="bi bi-trash"></i> Delete Period',
+                function() {
+                    htmx.ajax('POST', deleteUrl, {
+                        target: targetId,
+                        swap: 'outerHTML'
+                    });
+                },
+                true
+            );
+        }
+    </script>
+
+    <!-- Keyboard Shortcuts System -->
+    <script>
+        /**
+         * Global Keyboard Shortcuts System
+         * Context-aware shortcuts that adapt based on the current page
+         */
+        (function() {
+            // Detect current page context
+            function getCurrentContext() {
+                const path = window.location.pathname;
+                if (path.includes('/payment-periods/new') || path.includes('/edit')) {
+                    return 'form';
+                } else if (path.match(/\/payment-periods\/\d+$/)) {
+                    return 'detail';
+                } else if (path.includes('/payment-periods')) {
+                    return 'list';
+                } else if (path === '/' || path === '/balancetracker' || path === '/balancetracker/') {
+                    return 'dashboard';
+                } else {
+                    return 'other';
+                }
+            }
+
+            // Show toast notification when shortcut is triggered
+            function showShortcutToast(message, icon = 'bi-lightning-charge') {
+                const toast = document.createElement('div');
+                toast.className = 'shortcut-toast';
+                toast.innerHTML = `
+                    <i class="bi ${icon}"></i>
+                    <span>${message}</span>
+                `;
+                document.body.appendChild(toast);
+
+                // Trigger animation
+                setTimeout(() => toast.classList.add('active'), 10);
+
+                // Remove after animation
+                setTimeout(() => {
+                    toast.classList.remove('active');
+                    setTimeout(() => toast.remove(), 300);
+                }, 2000);
+            }
+
+            // Global keyboard shortcut handler
+            document.addEventListener('keydown', function(e) {
+                // Don't trigger shortcuts when typing in inputs (except Escape)
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                    if (e.key !== 'Escape') return;
+                }
+
+                // Don't trigger if a modal is open (except Escape)
+                const hasActiveModal = document.querySelector('.modal-overlay.active');
+                if (hasActiveModal && e.key !== 'Escape') return;
+
+                const context = getCurrentContext();
+                const isCtrl = e.ctrlKey || e.metaKey; // Support both Ctrl and Cmd
+
+                // DASHBOARD SHORTCUTS
+                if (context === 'dashboard') {
+                    // Ctrl+N - New Payment Period
+                    if (isCtrl && e.key.toLowerCase() === 'n') {
+                        e.preventDefault();
+                        showShortcutToast('Creating new payment period...', 'bi-plus-circle');
+                        setTimeout(() => {
+                            window.location.href = '/balancetracker/payment-periods/new';
+                        }, 150);
+                        return;
+                    }
+
+                    // Ctrl+A - View All Periods
+                    if (isCtrl && e.key.toLowerCase() === 'a') {
+                        e.preventDefault();
+                        showShortcutToast('Viewing all payment periods...', 'bi-list-ul');
+                        setTimeout(() => {
+                            window.location.href = '/balancetracker/payment-periods';
+                        }, 150);
+                        return;
+                    }
+                }
+
+                // LIST PAGE SHORTCUTS
+                if (context === 'list') {
+                    // Ctrl+N - New Payment Period
+                    if (isCtrl && e.key.toLowerCase() === 'n') {
+                        e.preventDefault();
+                        showShortcutToast('Creating new payment period...', 'bi-plus-circle');
+                        setTimeout(() => {
+                            window.location.href = '/balancetracker/payment-periods/new';
+                        }, 150);
+                        return;
+                    }
+
+                    // Ctrl+A - View All Periods (focuses search, clears it)
+                    if (isCtrl && e.key.toLowerCase() === 'a') {
+                        e.preventDefault();
+                        const searchInput = document.querySelector('.search-bar input');
+                        if (searchInput) {
+                            searchInput.value = '';
+                            searchInput.focus();
+                            // Trigger htmx to show all
+                            searchInput.dispatchEvent(new Event('keyup'));
+                            showShortcutToast('Viewing all payment periods', 'bi-list-ul');
+                        }
+                        return;
+                    }
+                }
+
+                // DETAIL PAGE SHORTCUTS
+                if (context === 'detail') {
+                    // Ctrl+E - Edit Payment Period
+                    if (isCtrl && e.key.toLowerCase() === 'e') {
+                        e.preventDefault();
+                        const editButton = document.querySelector('a[href*="/edit"]');
+                        if (editButton) {
+                            showShortcutToast('Opening editor...', 'bi-pencil');
+                            setTimeout(() => {
+                                editButton.click();
+                            }, 150);
+                        }
+                        return;
+                    }
+
+                    // Ctrl+D - Delete Payment Period
+                    if (isCtrl && e.key.toLowerCase() === 'd') {
+                        e.preventDefault();
+                        const deleteButton = document.querySelector('button[onclick*="confirmDeletePaymentPeriod"]');
+                        if (deleteButton) {
+                            showShortcutToast('Confirm deletion', 'bi-trash');
+                            setTimeout(() => {
+                                deleteButton.click();
+                            }, 150);
+                        }
+                        return;
+                    }
+
+                    // Ctrl+B - Back to List
+                    if (isCtrl && e.key.toLowerCase() === 'b') {
+                        e.preventDefault();
+                        showShortcutToast('Back to list...', 'bi-arrow-left');
+                        setTimeout(() => {
+                            window.location.href = '/balancetracker/payment-periods';
+                        }, 150);
+                        return;
+                    }
+                }
+
+                // FORM PAGE SHORTCUTS
+                if (context === 'form') {
+                    // Ctrl+C - Cancel (back to list)
+                    if (isCtrl && e.key.toLowerCase() === 'c') {
+                        e.preventDefault();
+                        const cancelButton = document.querySelector('a.btn-secondary[href*="/payment-periods"]');
+                        if (cancelButton) {
+                            showShortcutToast('Canceling...', 'bi-x-circle');
+                            setTimeout(() => {
+                                cancelButton.click();
+                            }, 150);
+                        }
+                        return;
+                    }
+                }
+
+                // GLOBAL SHORTCUTS (work everywhere)
+                // ? - Show keyboard shortcuts help (future enhancement)
+                if (e.key === '?') {
+                    e.preventDefault();
+                    showShortcutToast('Keyboard shortcuts active', 'bi-keyboard');
+                    return;
+                }
+            });
+
+            // Add shortcut hints to buttons on page load
+            function addShortcutHints() {
+                const context = getCurrentContext();
+
+                if (context === 'dashboard') {
+                    // Add hint to "New Payment Period" quick action button
+                    const quickActions = document.querySelectorAll('.quick-action-btn');
+                    quickActions.forEach(btn => {
+                        if (btn.href && btn.href.includes('/new') && !btn.querySelector('.shortcut-hint')) {
+                            const hint = document.createElement('span');
+                            hint.className = 'shortcut-hint';
+                            hint.innerHTML = '<kbd>Ctrl</kbd>+<kbd>N</kbd>';
+                            btn.appendChild(hint);
+                        } else if (btn.href && btn.href.includes('/payment-periods') && !btn.href.includes('/new') && !btn.querySelector('.shortcut-hint')) {
+                            const hint = document.createElement('span');
+                            hint.className = 'shortcut-hint';
+                            hint.innerHTML = '<kbd>Ctrl</kbd>+<kbd>A</kbd>';
+                            btn.appendChild(hint);
+                        }
+                    });
+                }
+
+                if (context === 'list') {
+                    // Add hint to "New Payment Period" button
+                    const newButton = document.querySelector('a[href*="/new"].btn-primary');
+                    if (newButton && !newButton.querySelector('.shortcut-hint')) {
+                        const hint = document.createElement('span');
+                        hint.className = 'shortcut-hint';
+                        hint.innerHTML = '<kbd>Ctrl</kbd>+<kbd>N</kbd>';
+                        newButton.appendChild(hint);
+                    }
+                }
+
+                if (context === 'detail') {
+                    // Add hint to "Edit" button
+                    const editButton = document.querySelector('a[href*="/edit"].btn-primary');
+                    if (editButton && !editButton.querySelector('.shortcut-hint')) {
+                        const hint = document.createElement('span');
+                        hint.className = 'shortcut-hint';
+                        hint.innerHTML = '<kbd>Ctrl</kbd>+<kbd>E</kbd>';
+                        editButton.appendChild(hint);
+                    }
+
+                    // Add hint to "Back to List" button
+                    const backButton = document.querySelector('a[href="/balancetracker/payment-periods"].btn-secondary');
+                    if (backButton && !backButton.querySelector('.shortcut-hint')) {
+                        const hint = document.createElement('span');
+                        hint.className = 'shortcut-hint';
+                        hint.innerHTML = '<kbd>Ctrl</kbd>+<kbd>B</kbd>';
+                        backButton.appendChild(hint);
+                    }
+                }
+
+                if (context === 'form') {
+                    // Add hint to "Cancel" button
+                    const cancelButton = document.querySelector('a.btn-secondary[href*="/payment-periods"]');
+                    if (cancelButton && !cancelButton.querySelector('.shortcut-hint')) {
+                        const hint = document.createElement('span');
+                        hint.className = 'shortcut-hint';
+                        hint.innerHTML = '<kbd>Ctrl</kbd>+<kbd>C</kbd>';
+                        cancelButton.appendChild(hint);
+                    }
+                }
+            }
+
+            // Initialize on page load
+            document.addEventListener('DOMContentLoaded', addShortcutHints);
+
+            // Re-initialize after htmx swaps
+            document.body.addEventListener('htmx:afterSwap', function() {
+                setTimeout(addShortcutHints, 100);
+            });
+
+            // Show keyboard shortcuts help overlay
+            window.showKeyboardShortcutsHelp = function() {
+                const context = getCurrentContext();
+                let shortcuts = '';
+
+                if (context === 'dashboard') {
+                    shortcuts = `
+                        <div class="shortcut-group">
+                            <h4>Dashboard Shortcuts</h4>
+                            <div class="shortcut-item">
+                                <span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>N</kbd></span>
+                                <span class="shortcut-desc">Create new payment period</span>
+                            </div>
+                            <div class="shortcut-item">
+                                <span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>A</kbd></span>
+                                <span class="shortcut-desc">View all payment periods</span>
+                            </div>
+                        </div>
+                    `;
+                } else if (context === 'list') {
+                    shortcuts = `
+                        <div class="shortcut-group">
+                            <h4>List View Shortcuts</h4>
+                            <div class="shortcut-item">
+                                <span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>N</kbd></span>
+                                <span class="shortcut-desc">Create new payment period</span>
+                            </div>
+                            <div class="shortcut-item">
+                                <span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>A</kbd></span>
+                                <span class="shortcut-desc">View all periods (clear search)</span>
+                            </div>
+                        </div>
+                    `;
+                } else if (context === 'detail') {
+                    shortcuts = `
+                        <div class="shortcut-group">
+                            <h4>Detail View Shortcuts</h4>
+                            <div class="shortcut-item">
+                                <span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>E</kbd></span>
+                                <span class="shortcut-desc">Edit payment period</span>
+                            </div>
+                            <div class="shortcut-item">
+                                <span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>D</kbd></span>
+                                <span class="shortcut-desc">Delete payment period</span>
+                            </div>
+                            <div class="shortcut-item">
+                                <span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>B</kbd></span>
+                                <span class="shortcut-desc">Back to list</span>
+                            </div>
+                        </div>
+                    `;
+                } else if (context === 'form') {
+                    shortcuts = `
+                        <div class="shortcut-group">
+                            <h4>Form Shortcuts</h4>
+                            <div class="shortcut-item">
+                                <span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span>
+                                <span class="shortcut-desc">Add payment item</span>
+                            </div>
+                            <div class="shortcut-item">
+                                <span class="shortcut-keys"><kbd>Cmd</kbd>+<kbd>Enter</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>
+                                <span class="shortcut-desc">Save form</span>
+                            </div>
+                            <div class="shortcut-item">
+                                <span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>C</kbd></span>
+                                <span class="shortcut-desc">Cancel and return to list</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const helpHtml = `
+                    <div class="shortcuts-overlay" onclick="this.remove()">
+                        <div class="shortcuts-panel" onclick="event.stopPropagation()">
+                            <div class="shortcuts-header">
+                                <h3><i class="bi bi-keyboard"></i> Keyboard Shortcuts</h3>
+                                <button class="shortcuts-close" onclick="this.closest('.shortcuts-overlay').remove()">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                            <div class="shortcuts-body">
+                                ${shortcuts}
+                                <div class="shortcut-group">
+                                    <h4>Global Shortcuts</h4>
+                                    <div class="shortcut-item">
+                                        <span class="shortcut-keys"><kbd>?</kbd></span>
+                                        <span class="shortcut-desc">Show this help</span>
+                                    </div>
+                                    <div class="shortcut-item">
+                                        <span class="shortcut-keys"><kbd>Esc</kbd></span>
+                                        <span class="shortcut-desc">Close dialogs</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="shortcuts-footer">
+                                <span style="opacity: 0.7;">Press <kbd>?</kbd> anytime to view shortcuts</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                const overlay = document.createElement('div');
+                overlay.innerHTML = helpHtml;
+                document.body.appendChild(overlay.firstElementChild);
+            };
+
+            // Add floating help button
+            function addHelpButton() {
+                if (document.querySelector('.shortcuts-help-btn')) return;
+
+                const helpBtn = document.createElement('button');
+                helpBtn.className = 'shortcuts-help-btn';
+                helpBtn.innerHTML = '<i class="bi bi-keyboard"></i>';
+                helpBtn.title = 'Keyboard shortcuts (?)';
+                helpBtn.onclick = showKeyboardShortcutsHelp;
+                document.body.appendChild(helpBtn);
+            }
+
+            document.addEventListener('DOMContentLoaded', addHelpButton);
+        })();
+    </script>
+
+    <!-- Local DateTime Formatting -->
+    <script>
+        /**
+         * Converts server timestamps to local timezone
+         * Looks for elements with class 'local-datetime' and data-datetime attribute
+         */
+        function formatLocalDateTimes() {
+            document.querySelectorAll('.local-datetime[data-datetime]').forEach(element => {
+                const serverDateTime = element.getAttribute('data-datetime');
+                if (!serverDateTime) return;
+
+                try {
+                    // Server sends LocalDateTime without timezone info (stored in UTC)
+                    // Append 'Z' to indicate UTC time for proper parsing
+                    const utcDateTime = serverDateTime.includes('Z') ? serverDateTime : serverDateTime + 'Z';
+                    const date = new Date(utcDateTime);
+
+                    // Format using Intl.DateTimeFormat for localized output in 24h format
+                    const formatter = new Intl.DateTimeFormat('en-US', {
+                        month: 'short',
+                        day: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false  // 24-hour format
+                    });
+
+                    element.textContent = formatter.format(date);
+                } catch (e) {
+                    console.error('Error formatting datetime:', serverDateTime, e);
+                }
+            });
+        }
+
+        // Format on page load
+        document.addEventListener('DOMContentLoaded', formatLocalDateTimes);
+
+        // Format after HTMX swaps content (for search results)
+        document.body.addEventListener('htmx:afterSwap', formatLocalDateTimes);
+    </script>
+
+    <!-- Custom JS -->
+    <script layout:fragment="scripts">
+        <!-- Page-specific scripts will be inserted here -->
+    </script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Fragment for balance display (used for real-time balance updates) -->
+<div th:fragment="balance" id="balance-preview">
+    <div class="summary-item">
+        <span class="summary-label">Starting Balance</span>
+        <span class="summary-value">
+            <span th:text="${paymentPeriod.startingBalance.currency.currencyCode}">USD</span>
+            <span th:text="${#numbers.formatDecimal(paymentPeriod.startingBalance.number, 1, 2)}">1,000.00</span>
+        </span>
+    </div>
+    <div class="summary-item">
+        <span class="summary-label">Total Payments</span>
+        <span class="summary-value">
+            <span th:text="${paymentPeriod.getTotalPayments().currency.currencyCode}">USD</span>
+            <span th:text="${#numbers.formatDecimal(paymentPeriod.getTotalPayments().number, 1, 2)}">250.00</span>
+        </span>
+    </div>
+    <div class="summary-item" style="padding-top: 12px; margin-top: 12px; border-top: 2px solid var(--border-color);">
+        <span class="summary-label" style="font-weight: 600;">Ending Balance</span>
+        <span class="summary-value summary-total"
+              th:classappend="${paymentPeriod.endingBalance.isNegative() ? 'text-danger' : 'text-success'}">
+            <span th:text="${paymentPeriod.endingBalance.currency.currencyCode}">USD</span>
+            <span th:text="${#numbers.formatDecimal(paymentPeriod.endingBalance.number, 1, 2)}">750.00</span>
+        </span>
+    </div>
+</div>
+</body>
+</html>

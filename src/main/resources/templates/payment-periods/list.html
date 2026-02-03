@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Payment Periods</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* Financial Table Design - Refined & Distinctive */
+        .payment-periods-table-wrapper {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #FFFFFF;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+        }
+
+        .payment-periods-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .payment-periods-table thead {
+            background: linear-gradient(180deg, #FAFBFC 0%, #F8FAFC 100%);
+            border-bottom: 2px solid #E2E8F0;
+        }
+
+        .payment-periods-table thead th {
+            padding: 16px 20px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #64748B;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            background: linear-gradient(180deg, #FAFBFC 0%, #F8FAFC 100%);
+            z-index: 10;
+        }
+
+        .payment-periods-table thead th:first-child {
+            padding-left: 24px;
+        }
+
+        .payment-periods-table thead th:last-child {
+            padding-right: 24px;
+        }
+
+        .payment-periods-table tbody tr {
+            border-bottom: 1px solid #F1F5F9;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .payment-periods-table tbody tr::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #5B5FEF;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .payment-periods-table tbody tr:hover {
+            background: linear-gradient(90deg, #F8FAFC 0%, #FFFFFF 100%);
+            transform: translateX(2px);
+            box-shadow: 0 2px 8px rgba(91, 95, 239, 0.08);
+        }
+
+        .payment-periods-table tbody tr:hover::before {
+            opacity: 1;
+        }
+
+        .payment-periods-table tbody tr:active {
+            transform: translateX(1px);
+        }
+
+        .payment-periods-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .payment-periods-table tbody td {
+            padding: 20px;
+            color: #0F172A;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        .payment-periods-table tbody td:first-child {
+            padding-left: 24px;
+        }
+
+        .payment-periods-table tbody td:last-child {
+            padding-right: 24px;
+        }
+
+        /* Period Date Column */
+        .period-date {
+            font-weight: 600;
+            color: #0F172A;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .period-date-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #5B5FEF;
+            flex-shrink: 0;
+        }
+
+        /* Amount Columns */
+        .amount-cell {
+            font-family: 'JetBrains Mono', 'SF Mono', 'Monaco', 'Courier New', monospace;
+            font-weight: 500;
+            font-size: 14px;
+            letter-spacing: -0.01em;
+        }
+
+        .currency-code {
+            font-size: 11px;
+            font-weight: 600;
+            color: #94A3B8;
+            margin-right: 6px;
+            letter-spacing: 0.05em;
+        }
+
+        .amount-value {
+            font-weight: 600;
+            color: #0F172A;
+        }
+
+        .amount-positive {
+            color: #059669;
+        }
+
+        .amount-negative {
+            color: #DC2626;
+        }
+
+        .amount-highlight {
+            padding: 6px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .amount-highlight.starting {
+            background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+        }
+
+        .amount-highlight.payments {
+            background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+        }
+
+        .amount-highlight.ending {
+            background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%);
+        }
+
+        /* Date Column */
+        .date-cell {
+            color: #64748B;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .date-icon {
+            font-size: 12px;
+            opacity: 0.6;
+        }
+
+        /* Actions Column */
+        .actions-cell {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .payment-periods-table tbody tr:hover .actions-cell {
+            opacity: 1;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #FFFFFF;
+            border: 1.5px solid #E2E8F0;
+            border-radius: 6px;
+            color: #475569;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            margin-left: 6px;
+        }
+
+        .action-btn:hover {
+            background: #F8FAFC;
+            border-color: #CBD5E1;
+            color: #0F172A;
+            transform: translateY(-1px);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        .action-btn i {
+            font-size: 12px;
+        }
+
+        .action-btn-primary {
+            background: linear-gradient(135deg, #5B5FEF 0%, #4F46E5 100%);
+            border-color: #5B5FEF;
+            color: #FFFFFF;
+        }
+
+        .action-btn-primary:hover {
+            background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
+            border-color: #4F46E5;
+            color: #FFFFFF;
+            box-shadow: 0 4px 12px rgba(91, 95, 239, 0.25);
+        }
+
+        .action-btn-danger {
+            background: #FFFFFF;
+            border-color: #FCA5A5;
+            color: #DC2626;
+        }
+
+        .action-btn-danger:hover {
+            background: #FEF2F2;
+            border-color: #EF4444;
+            color: #B91C1C;
+        }
+
+        /* Empty State */
+        .empty-state {
+            padding: 80px 20px;
+            text-align: center;
+            background: linear-gradient(180deg, #FAFBFC 0%, #FFFFFF 100%);
+            border-radius: 12px;
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            color: #CBD5E1;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0F172A;
+            margin: 0 0 8px 0;
+        }
+
+        .empty-state p {
+            font-size: 15px;
+            color: #64748B;
+            margin: 0;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1200px) {
+            .payment-periods-table thead th,
+            .payment-periods-table tbody td {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="page-header">
+        <h1 class="page-title">Payment Periods</h1>
+        <p class="page-subtitle">Track your payment periods and payment items</p>
+
+        <div class="header-actions">
+            <!-- Search Bar with HTMX -->
+            <div class="search-bar">
+                <i class="bi bi-search"></i>
+                <input type="text"
+                       class="form-control"
+                       placeholder="Search by date..."
+                       name="q"
+                       hx-get="/balancetracker/payment-periods/search"
+                       hx-trigger="keyup changed delay:300ms"
+                       hx-target="#payment-periods-list"
+                       hx-swap="innerHTML">
+            </div>
+
+            <!-- New Payment Period Button -->
+            <a th:href="@{/payment-periods/new}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i>
+                New Payment Period
+            </a>
+        </div>
+    </div>
+
+    <!-- Payment Periods Card -->
+    <div class="card">
+        <div class="card-body">
+            <div id="payment-periods-list">
+                <!-- Empty State -->
+                <div th:if="${paymentPeriods.empty}" class="empty-state">
+                    <i class="bi bi-calendar-x"></i>
+                    <h3>No payment periods found</h3>
+                    <p>Create your first payment period to get started</p>
+                </div>
+
+                <!-- Payment Periods Table -->
+                <div th:unless="${paymentPeriods.empty}" class="payment-periods-table-wrapper">
+                    <table class="payment-periods-table">
+                        <thead>
+                        <tr>
+                            <th>Period Date</th>
+                            <th>Starting Balance</th>
+                            <th>Ending Balance</th>
+                            <th>Total Payments</th>
+                            <th>Last Updated</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="period : ${paymentPeriods}"
+                            th:onclick="|window.location.href='@{/payment-periods/{id}(id=${period.id})}'|">
+                            <!-- Period Date -->
+                            <td class="period-date">
+                                <i class="bi bi-calendar-event" style="margin-right: 8px; color: #5B5FEF;"></i>
+                                <span th:text="${#temporals.format(period.periodDate, 'MMM dd, yyyy')}">Jan 01, 2024</span>
+                            </td>
+
+                            <!-- Starting Balance -->
+                            <td class="amount-cell">
+                                <span class="amount-highlight starting">
+                                    <span class="currency-code" th:text="${period.startingBalance.currency.currencyCode}">USD</span>
+                                    <span class="amount-value" th:text="${#numbers.formatDecimal(period.startingBalance.number, 1, 2)}">1,000.00</span>
+                                </span>
+                            </td>
+
+                            <!-- Ending Balance -->
+                            <td class="amount-cell">
+                                <span class="amount-highlight ending">
+                                    <span class="currency-code" th:text="${period.endingBalance.currency.currencyCode}">USD</span>
+                                    <span class="amount-value"
+                                          th:text="${#numbers.formatDecimal(period.endingBalance.number, 1, 2)}"
+                                          th:classappend="${period.endingBalance.isNegative() ? 'amount-negative' : 'amount-positive'}">750.00</span>
+                                </span>
+                            </td>
+
+                            <!-- Total Payments -->
+                            <td class="amount-cell">
+                                <span class="amount-highlight payments">
+                                    <span class="currency-code" th:text="${period.getTotalPayments().currency.currencyCode}">USD</span>
+                                    <span class="amount-value" th:text="${#numbers.formatDecimal(period.getTotalPayments().number, 1, 2)}">250.00</span>
+                                </span>
+                            </td>
+
+                            <!-- Last Updated -->
+                            <td class="date-cell">
+                                <i class="bi bi-clock date-icon"></i>
+                                <span class="local-datetime" th:attr="data-datetime=${period.updatedAt}">Jan 01, 2024 10:30</span>
+                            </td>
+
+                            <!-- Actions -->
+                            <td style="text-align: right;">
+                                <div class="actions-cell" onclick="event.stopPropagation();">
+                                    <a th:href="@{/payment-periods/{id}/edit(id=${period.id})}"
+                                       class="action-btn action-btn-primary"
+                                       title="Edit period">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button class="action-btn action-btn-danger"
+                                            th:attr="data-delete-url=@{/payment-periods/{id}/delete(id=${period.id})}"
+                                            onclick="confirmDeletePaymentPeriod(this)"
+                                            title="Delete period">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

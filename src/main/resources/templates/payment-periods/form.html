@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title th:text="${paymentPeriod != null ? 'Edit Payment Period' : 'New Payment Period'}">New Payment Period</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title" th:text="${paymentPeriod != null ? 'Edit Payment Period' : 'New Payment Period'}">New Payment Period</h1>
+        <p class="page-subtitle" th:text="${paymentPeriod != null ? 'Update payment period details and payment items' : 'Create a new payment period'}">
+            Create a new payment period
+        </p>
+    </div>
+
+    <!-- Error Message -->
+    <div th:if="${error}" class="alert alert-danger alert-dismissible" role="alert" style="margin-bottom: 24px; padding: 16px 48px 16px 16px; background-color: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 6px; color: #991B1B; position: relative;">
+        <i class="bi bi-exclamation-triangle-fill" style="margin-right: 8px;"></i>
+        <strong>Error:</strong> <span th:text="${error}">Error message</span>
+        <button type="button" onclick="this.parentElement.style.display='none'" style="position: absolute; top: 12px; right: 12px; background: none; border: none; font-size: 20px; color: #991B1B; cursor: pointer; padding: 0; width: 24px; height: 24px; line-height: 1; opacity: 0.7;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">
+            <i class="bi bi-x"></i>
+        </button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 320px; gap: 24px;">
+        <!-- Main Form -->
+        <div>
+            <form th:action="${periodId != null ? '/balancetracker/payment-periods/' + periodId : (paymentPeriod != null && paymentPeriod.id != null ? '/balancetracker/payment-periods/' + paymentPeriod.id : '/balancetracker/payment-periods')}"
+                  method="post">
+
+                <!-- Basic Information Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Period Information</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="periodDate">Period Date *</label>
+                                <input type="date"
+                                       id="periodDate"
+                                       name="periodDate"
+                                       class="form-control"
+                                       th:value="${paymentPeriod != null ? paymentPeriod.periodDate : #temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}"
+                                       th:max="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}"
+                                       required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="startingBalance">Starting Balance *</label>
+                                <div style="display: grid; grid-template-columns: 1fr 100px; gap: 8px;">
+                                    <input type="number"
+                                           id="startingBalance"
+                                           name="startingBalance"
+                                           class="form-control"
+                                           step="0.01"
+                                           placeholder="1000.00"
+                                           th:value="${paymentPeriod != null ? paymentPeriod.startingBalance.number : ''}"
+                                           required>
+                                    <select name="currency" class="form-control" th:value="${paymentPeriod != null ? paymentPeriod.startingBalance.currency.currencyCode : 'USD'}">
+                                        <option value="USD" selected>USD</option>
+                                        <option value="EUR">EUR</option>
+                                        <option value="GBP">GBP</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Items Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Payment Items</h2>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <button type="button"
+                                    class="btn btn-sm btn-primary"
+                                    tabindex="-1"
+                                    onclick="addPaymentItemRow()"
+                                    aria-label="Add payment item (or press Ctrl+Enter)">
+                                <i class="bi bi-plus-circle"></i>
+                                Add Payment Item
+                            </button>
+                            <span class="keyboard-hint">
+                                <kbd class="key-badge key-combo">
+                                    <span class="key-combo-ctrl">Ctrl</span>
+                                    <span class="key-combo-divider">+</span>
+                                    <span class="key-combo-key">Enter</span>
+                                </kbd>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="payment-items-container">
+                            <!-- Empty state (shown when no rows) -->
+                            <div id="empty-state" class="empty-state" th:if="${paymentPeriod == null || paymentPeriod.paymentItems.empty}">
+                                <i class="bi bi-receipt"></i>
+                                <p>No payment items yet. Click "Add Payment Item" to get started.</p>
+                            </div>
+
+                            <!-- Existing items (edit mode) - render as editable rows -->
+                            <th:block th:if="${paymentPeriod != null && !paymentPeriod.paymentItems.empty}">
+                                <div th:each="item, iterStat : ${paymentPeriod.paymentItems}"
+                                     class="payment-item-row"
+                                     th:attr="data-index=${iterStat.index}">
+
+                                    <!-- Hidden field to track original index for existing items -->
+                                    <input type="hidden"
+                                           name="originalIndex"
+                                           th:value="${iterStat.index}"
+                                           th:attr="data-index=${iterStat.index}">
+
+                                    <!-- Payee Combo Field -->
+                                    <div class="form-group">
+                                        <label class="form-label" th:for="'payee-' + ${iterStat.index}">Payee</label>
+                                        <div class="payee-combo-wrapper" th:attr="data-index=${iterStat.index}">
+                                            <input type="text"
+                                                   th:id="'payee-input-' + ${iterStat.index}"
+                                                   class="form-control payee-combo-input"
+                                                   placeholder="Select or type payee name..."
+                                                   autocomplete="off"
+                                                   required
+                                                   th:value="${item.payee.name}"
+                                                   th:attr="data-index=${iterStat.index}">
+                                            <i class="bi bi-chevron-down payee-combo-icon" tabindex="-1" aria-hidden="true"></i>
+
+                                            <!-- Hidden fields for form submission -->
+                                            <input type="hidden"
+                                                   th:id="'payeeId-' + ${iterStat.index}"
+                                                   name="payeeId"
+                                                   th:value="${item.payee.id}"
+                                                   th:attr="data-index=${iterStat.index}"
+                                                   tabindex="-1">
+                                            <input type="hidden"
+                                                   th:id="'payeeName-' + ${iterStat.index}"
+                                                   name="payeeName"
+                                                   th:attr="data-index=${iterStat.index}"
+                                                   tabindex="-1">
+
+                                            <!-- Dropdown -->
+                                            <div class="payee-dropdown" th:attr="data-index=${iterStat.index}" tabindex="-1">
+                                                <div class="payee-dropdown-list" tabindex="-1">
+                                                    <!-- Populated dynamically by JavaScript -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Amount -->
+                                    <div class="form-group">
+                                        <label class="form-label" th:for="'amount-' + ${iterStat.index}">Amount</label>
+                                        <input type="number"
+                                               th:id="'amount-' + ${iterStat.index}"
+                                               name="amount"
+                                               class="form-control"
+                                               step="0.01"
+                                               placeholder="0.00"
+                                               th:value="${item.amount.number}"
+                                               required>
+                                    </div>
+
+                                    <!-- Notes -->
+                                    <div class="form-group">
+                                        <label class="form-label" th:for="'notes-' + ${iterStat.index}">Notes</label>
+                                        <input type="text"
+                                               th:id="'notes-' + ${iterStat.index}"
+                                               name="notes"
+                                               class="form-control"
+                                               placeholder="Optional notes..."
+                                               th:value="${item.notes}">
+                                    </div>
+
+                                    <!-- Remove Button -->
+                                    <div class="form-group">
+                                        <button type="button"
+                                                class="btn-remove-item"
+                                                tabindex="-1"
+                                                onclick="confirmRemovePaymentItemRow(this)"
+                                                title="Remove item"
+                                                aria-label="Remove this payment item">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </th:block>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div style="display: flex; gap: 12px; justify-content: flex-end; align-items: center; margin-top: 24px;">
+                    <span class="keyboard-hint" style="margin-right: auto;">
+                        <kbd class="key-badge key-combo">
+                            <span class="key-combo-submit"></span>
+                            <span class="key-combo-divider">+</span>
+                            <span class="key-combo-key">Enter</span>
+                        </kbd>
+                        <span class="keyboard-hint-label">to save</span>
+                    </span>
+                    <a th:href="@{/payment-periods}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i>
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary" onclick="return validatePaymentItems(event)">
+                        <i class="bi bi-check-circle"></i>
+                        <span th:text="${paymentPeriod != null ? 'Update Period' : 'Create Period'}">Create Period</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sidebar - Help/Info -->
+        <div>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title" style="font-size: 14px;">
+                        <i class="bi bi-info-circle"></i>
+                        Tips
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                        <p><strong>Period Date:</strong> Select the date for this billing period.</p>
+                        <p><strong>Starting Balance:</strong> Enter your account balance at the start of this period.</p>
+                        <p><strong>Payment Items:</strong> Add individual payments or bills for this period <span th:if="${paymentPeriod != null}">. The ending balance will update automatically</span>.</p>
+                        <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+                            <p style="font-weight: 600; margin-bottom: 12px; color: var(--text-primary);">
+                                <i class="bi bi-keyboard" style="margin-right: 6px;"></i>
+                                Keyboard Shortcuts
+                            </p>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <kbd class="key-badge key-combo">
+                                        <span class="key-combo-ctrl">Ctrl</span>
+                                        <span class="key-combo-divider">+</span>
+                                        <span class="key-combo-key">Enter</span>
+                                    </kbd>
+                                    <span style="font-size: 12px;">Add payment item</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <kbd class="key-badge key-combo">
+                                        <span class="key-combo-submit"></span>
+                                        <span class="key-combo-divider">+</span>
+                                        <span class="key-combo-key">Enter</span>
+                                    </kbd>
+                                    <span style="font-size: 12px;">Save period</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Balance Preview (Edit Mode) -->
+            <div class="card mt-4" th:if="${(paymentPeriod != null && paymentPeriod.id != null) || periodId != null}">
+                <div class="card-body" th:if="${paymentPeriod != null}">
+                    <div id="balance-preview" th:if="${periodId != null || paymentPeriod.id != null}" th:hx-get="@{/payment-periods/{id}/balance(id=${periodId != null ? periodId : paymentPeriod.id})}" hx-trigger="load">
+                        <div class="summary-item">
+                            <span class="summary-label">Starting Balance</span>
+                            <span class="summary-value">
+                                <span th:text="${paymentPeriod.startingBalance.currency.currencyCode}">USD</span>
+                                <span th:text="${#numbers.formatDecimal(paymentPeriod.startingBalance.number, 1, 2)}">1,000.00</span>
+                            </span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Total Payments</span>
+                            <span class="summary-value">
+                                <span th:text="${paymentPeriod.getTotalPayments().currency.currencyCode}">USD</span>
+                                <span th:text="${#numbers.formatDecimal(paymentPeriod.getTotalPayments().number, 1, 2)}">0.00</span>
+                            </span>
+                        </div>
+                        <div class="summary-item" style="padding-top: 12px; margin-top: 12px; border-top: 2px solid var(--border-color);">
+                            <span class="summary-label" style="font-weight: 600;">Ending Balance</span>
+                            <span class="summary-value summary-total"
+                                  th:classappend="${paymentPeriod.endingBalance.isNegative() ? 'text-danger' : 'text-success'}">
+                                <span th:text="${paymentPeriod.endingBalance.currency.currencyCode}">USD</span>
+                                <span th:text="${#numbers.formatDecimal(paymentPeriod.endingBalance.number, 1, 2)}">1,000.00</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script layout:fragment="scripts" th:inline="javascript">
+    // Helper function to show info modal (single button)
+    function showInfoModal(message) {
+        openConfirmModal(
+            message,
+            '<i class="bi bi-check-circle"></i> Got it',
+            function() {
+                // No action needed, just close
+            },
+            false, // Not danger (shows info icon)
+            false  // Don't show cancel button
+        );
+    }
+
+    // Detect platform and add class to body for keyboard hint styling
+    function detectPlatform() {
+        const platform = navigator.platform.toLowerCase();
+        if (platform.includes('win')) {
+            document.body.classList.add('platform-windows');
+        } else if (platform.includes('linux')) {
+            document.body.classList.add('platform-linux');
+        } else {
+            document.body.classList.add('platform-mac');
+        }
+    }
+
+    // Keyboard Shortcuts Handler - extracted to function so it can be re-initialized
+    let keyboardShortcutsInitialized = false;
+    function initializeKeyboardShortcuts() {
+        // Prevent multiple initializations
+        if (keyboardShortcutsInitialized) {
+            return;
+        }
+        keyboardShortcutsInitialized = true;
+
+        document.addEventListener('keydown', function(e) {
+            // Cmd+Enter (Mac) or Ctrl+Shift+Enter (Windows/Linux) to submit form
+            const isSubmitShortcut = (e.metaKey && e.key === 'Enter' && !e.ctrlKey) || // Mac: Cmd+Enter
+                                     (e.ctrlKey && e.shiftKey && e.key === 'Enter' && !e.metaKey); // Win/Linux: Ctrl+Shift+Enter
+
+            if (isSubmitShortcut) {
+                e.preventDefault();
+                const submitButton = document.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    // Add visual feedback
+                    submitButton.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        submitButton.style.transform = '';
+                    }, 150);
+
+                    submitButton.click();
+                }
+                return;
+            }
+
+            // Ctrl+Enter to add payment item (all platforms)
+            if (e.ctrlKey && e.key === 'Enter' && !e.shiftKey && !e.metaKey) {
+                e.preventDefault();
+
+                // Add visual feedback
+                const addButton = document.querySelector('.btn-primary[onclick="addPaymentItemRow()"]');
+                if (addButton) {
+                    addButton.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        addButton.style.transform = '';
+                    }, 150);
+
+                    addPaymentItemRow();
+                }
+            }
+
+            // Plain Enter - let it work normally (dropdown selection, etc.)
+            // No special handling needed
+        });
+    }
+
+    // Initialize on page load
+    detectPlatform();
+    initializeKeyboardShortcuts();
+
+    // Initialize payment item index to count of existing items
+    let paymentItemIndex = /*[[${paymentPeriod != null && paymentPeriod.paymentItems != null ? paymentPeriod.paymentItems.size() : 0}]]*/ 0;
+
+    // Make payees data globally available for dynamically loaded rows
+    window.payeesData = /*[[${payees}]]*/ [];
+
+    // Track newly typed payee names that aren't saved yet (so they appear in subsequent dropdowns)
+    window.newPayees = [];
+
+    // Confirm removal of payment item row from form
+    function confirmRemovePaymentItemRow(button) {
+        openConfirmModal(
+            'Remove this payment item from the form? This will not be saved until you submit the form.',
+            '<i class="bi bi-trash"></i> Remove',
+            function() {
+                const row = button.closest('.payment-item-row');
+                row.remove();
+
+                // Check if we need to show empty state
+                setTimeout(() => {
+                    const container = document.getElementById('payment-items-container');
+                    const rows = container.querySelectorAll('.payment-item-row');
+                    const emptyState = document.getElementById('empty-state');
+
+                    if (emptyState && rows.length === 0) {
+                        emptyState.style.display = 'block';
+                    }
+                }, 100);
+            },
+            true
+        );
+    }
+
+    // Initialize payee combos for existing items on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize payee combo for each existing row
+        for (let i = 0; i < paymentItemIndex; i++) {
+            initializePayeeComboForRow(i);
+        }
+    });
+
+    // Initialize payee combo dropdown for a specific row
+    function initializePayeeComboForRow(index) {
+        const input = document.getElementById(`payee-input-${index}`);
+        if (!input || input.hasAttribute('data-initialized')) {
+            return;
+        }
+
+        input.setAttribute('data-initialized', 'true');
+
+        const wrapper = input.closest('.payee-combo-wrapper');
+        const dropdown = wrapper.querySelector('.payee-dropdown');
+        const payeeIdInput = document.getElementById(`payeeId-${index}`);
+        const payeeNameInput = document.getElementById(`payeeName-${index}`);
+
+        let selectedPayeeId = null;
+        let highlightedIndex = -1;
+
+        // Show dropdown on focus
+        input.addEventListener('focus', function() {
+            wrapper.classList.add('active');
+            dropdown.classList.add('active');
+            renderDropdown(''); // Show all payees, don't filter by current value
+        });
+
+        // Hide dropdown on blur
+        input.addEventListener('blur', function() {
+            setTimeout(() => {
+                wrapper.classList.remove('active');
+                dropdown.classList.remove('active');
+
+                // If user typed a value but didn't select from dropdown, add it to newPayees
+                const typedValue = input.value.trim();
+                if (typedValue && !payeeIdInput.value && !payeeNameInput.value) {
+                    // Set as new payee
+                    payeeNameInput.value = typedValue;
+
+                    // Add to newPayees list so it appears in subsequent dropdowns
+                    if (!window.newPayees.includes(typedValue)) {
+                        window.newPayees.push(typedValue);
+                    }
+                }
+            }, 200);
+        });
+
+        // Filter on input
+        input.addEventListener('input', function() {
+            selectedPayeeId = null;
+            highlightedIndex = -1;
+            renderDropdown(this.value);
+        });
+
+        // Keyboard navigation
+        input.addEventListener('keydown', function(e) {
+            const items = dropdown.querySelectorAll('.payee-dropdown-item, .payee-dropdown-create');
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                highlightedIndex = Math.min(highlightedIndex + 1, items.length - 1);
+                updateHighlight(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                highlightedIndex = Math.max(highlightedIndex - 1, -1);
+                updateHighlight(items);
+            } else if (e.key === 'Enter' && highlightedIndex >= 0) {
+                e.preventDefault();
+                items[highlightedIndex].click();
+            } else if (e.key === 'Escape') {
+                wrapper.classList.remove('active');
+                dropdown.classList.remove('active');
+            }
+        });
+
+        function renderDropdown(filterText) {
+            const listContainer = dropdown.querySelector('.payee-dropdown-list');
+            listContainer.innerHTML = '';
+
+            const filter = (filterText || '').toLowerCase().trim();
+
+            // Combine database payees with newly typed payees (not yet saved)
+            const dbPayees = window.payeesData || [];
+            const newPayees = window.newPayees || [];
+
+            // Create combined list: database payees (with ID) + new payees (without ID)
+            const allPayees = [
+                ...dbPayees,
+                ...newPayees.map(name => ({ id: null, name: name, isNew: true }))
+            ];
+
+            const filtered = allPayees.filter(p =>
+                p.name.toLowerCase().includes(filter)
+            );
+
+            if (filtered.length === 0 && !filter) {
+                listContainer.innerHTML = '<div class="payee-dropdown-empty">No payees available</div>';
+                return;
+            }
+
+            // Render all payees (existing + newly typed)
+            filtered.forEach(payee => {
+                const item = document.createElement('div');
+                item.className = 'payee-dropdown-item';
+                if (payee.id === selectedPayeeId) {
+                    item.classList.add('selected');
+                }
+                const badgeClass = payee.isNew ? 'new' : 'existing';
+                const badgeText = payee.isNew ? 'NEW' : 'EXISTING';
+                item.innerHTML = `
+                    <span>${escapeHtml(payee.name)}</span>
+                    <span class="payee-badge ${badgeClass}">${badgeText}</span>
+                `;
+                item.addEventListener('click', () => selectPayee(payee));
+                listContainer.appendChild(item);
+            });
+
+            // Show "Create new" option if typing a name not in the combined list
+            if (filter && !filtered.some(p => p.name.toLowerCase() === filter)) {
+                const createItem = document.createElement('div');
+                createItem.className = 'payee-dropdown-create';
+                createItem.innerHTML = `
+                    <i class="bi bi-plus-circle"></i>
+                    <span>Create new payee: <strong>${escapeHtml(filter)}</strong></span>
+                `;
+                createItem.addEventListener('click', () => createPayee(filter));
+                listContainer.appendChild(createItem);
+            }
+        }
+
+        function selectPayee(payee) {
+            input.value = payee.name;
+            selectedPayeeId = payee.id;
+            payeeIdInput.value = payee.id;
+            payeeNameInput.value = '';
+            wrapper.classList.remove('active');
+            dropdown.classList.remove('active');
+        }
+
+        function createPayee(name) {
+            input.value = name;
+            selectedPayeeId = null;
+            payeeIdInput.value = '';
+            payeeNameInput.value = name;
+
+            // Add to newPayees list so it appears in subsequent dropdowns
+            if (!window.newPayees.includes(name)) {
+                window.newPayees.push(name);
+            }
+
+            wrapper.classList.remove('active');
+            dropdown.classList.remove('active');
+        }
+
+        function updateHighlight(items) {
+            items.forEach((item, idx) => {
+                item.classList.toggle('highlighted', idx === highlightedIndex);
+            });
+            if (highlightedIndex >= 0 && items[highlightedIndex]) {
+                items[highlightedIndex].scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    }
+
+    // Validate payment items before form submission
+    function validatePaymentItems(event) {
+        event.preventDefault();
+
+        const form = event.target.closest('form');
+
+        // First, check HTML5 validation
+        if (!form.checkValidity()) {
+            // Find the first invalid field
+            const firstInvalid = form.querySelector(':invalid');
+            if (firstInvalid) {
+                // Add shake animation to the invalid field
+                firstInvalid.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    firstInvalid.style.animation = '';
+                }, 500);
+
+                // Scroll to and focus the invalid field
+                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => {
+                    firstInvalid.focus();
+                }, 300);
+
+                // Show user-friendly error message
+                let fieldName = 'This field';
+                if (firstInvalid.id === 'periodDate') {
+                    fieldName = 'Period Date';
+                } else if (firstInvalid.id === 'startingBalance') {
+                    fieldName = 'Starting Balance';
+                } else if (firstInvalid.classList.contains('payee-combo-input')) {
+                    fieldName = 'Payee';
+                } else if (firstInvalid.name === 'amount') {
+                    fieldName = 'Amount';
+                }
+
+                showInfoModal(
+                    `${fieldName} is required. Please fill in this field before submitting the form.`
+                );
+            }
+            return false;
+        }
+        const rows = Array.from(document.querySelectorAll('.payment-item-row'));
+
+        // First, populate payeeName for any items where user typed but didn't select
+        for (let row of rows) {
+            const index = row.getAttribute('data-index');
+            const payeeInput = document.getElementById(`payee-input-${index}`);
+            const payeeIdInput = document.getElementById(`payeeId-${index}`);
+            const payeeNameInput = document.getElementById(`payeeName-${index}`);
+
+            // If payee input has a value but hidden fields are empty, populate payeeName
+            if (payeeInput && payeeInput.value.trim()) {
+                if (!payeeIdInput.value && !payeeNameInput.value) {
+                    payeeNameInput.value = payeeInput.value.trim();
+                }
+            }
+        }
+
+        // Separate existing items from new items
+        const existingItems = [];
+        const newItems = [];
+
+        rows.forEach(row => {
+            const index = row.getAttribute('data-index');
+            const originalIndexInput = row.querySelector('input[name="originalIndex"]');
+            const originalIndex = originalIndexInput ? parseInt(originalIndexInput.value) : -1;
+
+            if (originalIndex >= 0) {
+                existingItems.push({ row, index, originalIndex });
+            } else {
+                newItems.push({ row, index });
+            }
+        });
+
+        // Sort existing items by originalIndex
+        existingItems.sort((a, b) => a.originalIndex - b.originalIndex);
+
+        // Reverse new items (they're inserted at top, so reverse to get creation order)
+        newItems.reverse();
+
+        // Combine: existing items first, then new items
+        const orderedItems = [...existingItems, ...newItems];
+
+        // Create URLSearchParams for application/x-www-form-urlencoded encoding
+        const formData = new URLSearchParams();
+
+        // Add non-payment-item fields first
+        const periodDate = form.querySelector('[name="periodDate"]').value;
+        const startingBalance = form.querySelector('[name="startingBalance"]').value;
+        const currency = form.querySelector('[name="currency"]').value;
+
+        formData.append('periodDate', periodDate);
+        formData.append('startingBalance', startingBalance);
+        formData.append('currency', currency);
+
+        // Add payment items in the correct order
+        orderedItems.forEach(({ row, index }) => {
+            const originalIndexInput = row.querySelector('input[name="originalIndex"]');
+            const payeeIdInput = document.getElementById(`payeeId-${index}`);
+            const payeeNameInput = document.getElementById(`payeeName-${index}`);
+            const amountInput = document.querySelector(`[name="amount"][id="amount-${index}"]`);
+            const notesInput = document.querySelector(`[name="notes"][id="notes-${index}"]`);
+
+            if (originalIndexInput) {
+                formData.append('originalIndex', originalIndexInput.value);
+            } else {
+                formData.append('originalIndex', '-1');
+            }
+
+            if (payeeIdInput && payeeIdInput.value) {
+                formData.append('payeeId', payeeIdInput.value);
+            } else {
+                formData.append('payeeId', '');
+            }
+
+            if (payeeNameInput && payeeNameInput.value) {
+                formData.append('payeeName', payeeNameInput.value);
+            } else {
+                formData.append('payeeName', '');
+            }
+
+            if (amountInput && amountInput.value) {
+                formData.append('amount', amountInput.value);
+            }
+
+            if (notesInput) {
+                formData.append('notes', notesInput.value || '');
+            } else {
+                formData.append('notes', '');
+            }
+        });
+
+        // Submit using fetch with URL-encoded content type
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData.toString()
+        })
+        .then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else if (response.ok) {
+                return response.text();
+            } else {
+                throw new Error('Form submission failed');
+            }
+        })
+        .then(html => {
+            if (html) {
+                // If not redirected, replace the page content (validation errors)
+                document.open();
+                document.write(html);
+                document.close();
+
+                // Re-initialize keyboard shortcuts after page replacement
+                keyboardShortcutsInitialized = false;
+                detectPlatform();
+                initializeKeyboardShortcuts();
+            }
+        })
+        .catch(error => {
+            console.error('Error submitting form:', error);
+            showInfoModal(
+                'There was an error submitting the form. Please check your entries and try again. If the problem persists, please refresh the page.'
+            );
+        });
+
+        return false; // Prevent default form submission
+    }
+
+    // Add payment item row using htmx to fetch the fragment
+    function addPaymentItemRow() {
+        // Hide empty state
+        const emptyState = document.getElementById('empty-state');
+        if (emptyState) {
+            emptyState.style.display = 'none';
+        }
+
+        // First, refresh payees data from server
+        fetch('/balancetracker/api/payees')
+            .then(response => response.json())
+            .then(payees => {
+                // Update global payees data
+                window.payeesData = payees;
+
+                // Now add the payment item row
+                const container = document.getElementById('payment-items-container');
+                const currentIndex = paymentItemIndex;
+
+                // Create a temporary div to hold the fragment
+                const tempDiv = document.createElement('div');
+                tempDiv.id = `temp-row-${currentIndex}`;
+
+                // Listen for htmx:afterSwap event on the temp div
+                tempDiv.addEventListener('htmx:afterSwap', function(event) {
+                    // Move children from temp div to container
+                    // Insert new rows at the TOP for data entry (after empty-state if present)
+                    const emptyState = container.querySelector('#empty-state');
+                    const insertionPoint = emptyState ? emptyState.nextSibling : container.firstChild;
+
+                    while (tempDiv.firstChild) {
+                        if (insertionPoint) {
+                            container.insertBefore(tempDiv.firstChild, insertionPoint);
+                        } else {
+                            container.appendChild(tempDiv.firstChild);
+                        }
+                    }
+
+                    // Remove temp div
+                    tempDiv.remove();
+
+                    // Initialize the payee combo for this row
+                    initializePayeeComboForRow(currentIndex);
+
+                    // Auto-focus the payee field for smooth keyboard entry
+                    setTimeout(() => {
+                        const payeeInput = document.getElementById(`payee-input-${currentIndex}`);
+                        if (payeeInput) {
+                            payeeInput.focus();
+                        }
+                    }, 100);
+                }, { once: true });
+
+                // Append temp div to body (htmx needs it in DOM)
+                document.body.appendChild(tempDiv);
+
+                // Fetch the fragment
+                htmx.ajax('POST', '/balancetracker/payment-periods/new/payment-items/add-row', {
+                    target: tempDiv,
+                    swap: 'innerHTML',
+                    values: { index: currentIndex }
+                });
+
+                paymentItemIndex++;
+            })
+            .catch(error => {
+                console.error('Error fetching payees:', error);
+            });
+    }
+
+    // Update balance preview (edit mode only)
+    function updateBalancePreview() {
+        const balancePreview = document.getElementById('balance-preview');
+        if (balancePreview && typeof htmx !== 'undefined') {
+            htmx.trigger(balancePreview, 'load');
+        }
+    }
+
+    // Update balance preview when payment items change via htmx (edit mode)
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+        if (event.detail.target.id === 'payment-items-table') {
+            updateBalancePreview();
+        }
+    });
+
+    // Listen for balance update trigger from server
+    document.body.addEventListener('balanceUpdated', function(event) {
+        updateBalancePreview();
+    });
+
+    // Show empty state if all rows are removed
+    document.body.addEventListener('DOMNodeRemoved', function(event) {
+        if (event.target.classList && event.target.classList.contains('payment-item-row')) {
+            setTimeout(() => {
+                const container = document.getElementById('payment-items-container');
+                const rows = container.querySelectorAll('.payment-item-row');
+                const emptyState = document.getElementById('empty-state');
+
+                if (emptyState && rows.length === 0) {
+                    emptyState.style.display = 'block';
+                }
+            }, 100);
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Fragment for payment periods list (used for search/filter results) -->
+<div th:fragment="payment-periods-list">
+    <!-- Empty State -->
+    <div th:if="${paymentPeriods.empty}" class="empty-state">
+        <i class="bi bi-calendar-x"></i>
+        <h3>No payment periods found</h3>
+        <p>Try adjusting your search query or create a new payment period</p>
+    </div>
+
+    <!-- Payment Periods Table -->
+    <div th:unless="${paymentPeriods.empty}" class="payment-periods-table-wrapper">
+        <table class="payment-periods-table">
+            <thead>
+            <tr>
+                <th>Period Date</th>
+                <th>Starting Balance</th>
+                <th>Ending Balance</th>
+                <th>Total Payments</th>
+                <th>Last Updated</th>
+                <th style="text-align: right;">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="period : ${paymentPeriods}"
+                th:onclick="|window.location.href='@{/payment-periods/{id}(id=${period.id})}'|">
+                <!-- Period Date -->
+                <td class="period-date">
+                    <i class="bi bi-calendar-event" style="margin-right: 8px; color: #5B5FEF;"></i>
+                    <span th:text="${#temporals.format(period.periodDate, 'MMM dd, yyyy')}">Jan 01, 2024</span>
+                </td>
+
+                <!-- Starting Balance -->
+                <td class="amount-cell">
+                    <span class="amount-highlight starting">
+                        <span class="currency-code" th:text="${period.startingBalance.currency.currencyCode}">USD</span>
+                        <span class="amount-value" th:text="${#numbers.formatDecimal(period.startingBalance.number, 1, 2)}">1,000.00</span>
+                    </span>
+                </td>
+
+                <!-- Ending Balance -->
+                <td class="amount-cell">
+                    <span class="amount-highlight ending">
+                        <span class="currency-code" th:text="${period.endingBalance.currency.currencyCode}">USD</span>
+                        <span class="amount-value"
+                              th:text="${#numbers.formatDecimal(period.endingBalance.number, 1, 2)}"
+                              th:classappend="${period.endingBalance.isNegative() ? 'amount-negative' : 'amount-positive'}">750.00</span>
+                    </span>
+                </td>
+
+                <!-- Total Payments -->
+                <td class="amount-cell">
+                    <span class="amount-highlight payments">
+                        <span class="currency-code" th:text="${period.getTotalPayments().currency.currencyCode}">USD</span>
+                        <span class="amount-value" th:text="${#numbers.formatDecimal(period.getTotalPayments().number, 1, 2)}">250.00</span>
+                    </span>
+                </td>
+
+                <!-- Last Updated -->
+                <td class="date-cell">
+                    <i class="bi bi-clock date-icon"></i>
+                    <span class="local-datetime" th:attr="data-datetime=${period.updatedAt}">Jan 01, 2024 10:30</span>
+                </td>
+
+                <!-- Actions -->
+                <td style="text-align: right;">
+                    <div class="actions-cell" onclick="event.stopPropagation();">
+                        <a th:href="@{/payment-periods/{id}/edit(id=${period.id})}"
+                           class="action-btn action-btn-primary"
+                           title="Edit period">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <button class="action-btn action-btn-danger"
+                                th:attr="data-delete-url=@{/payment-periods/{id}/delete(id=${period.id})}"
+                                onclick="confirmDeletePaymentPeriod(this)"
+                                title="Delete period">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

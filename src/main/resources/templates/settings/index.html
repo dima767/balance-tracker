@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Settings</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Settings Page Refined Aesthetic */
+        .settings-container {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            max-width: 1200px;
+            padding: 48px 40px;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .settings-header {
+            margin-bottom: 40px;
+        }
+
+        .settings-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #0F172A;
+            margin: 0 0 8px 0;
+            letter-spacing: -0.02em;
+        }
+
+        .settings-subtitle {
+            font-size: 15px;
+            color: #64748B;
+            font-weight: 400;
+            margin: 0;
+        }
+
+        .settings-section {
+            background: #FFFFFF;
+            border-radius: 12px;
+            box-shadow:
+                0 1px 2px rgba(0, 0, 0, 0.04),
+                0 0 0 1px rgba(15, 23, 42, 0.04);
+            margin-bottom: 24px;
+            overflow: hidden;
+            animation: slideUp 0.5s ease-out;
+            animation-delay: 0.1s;
+            animation-fill-mode: both;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-header {
+            padding: 24px 28px;
+            border-bottom: 1px solid #F1F5F9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0F172A;
+            margin: 0;
+            letter-spacing: -0.01em;
+        }
+
+        .section-description {
+            font-size: 14px;
+            color: #64748B;
+            margin: 4px 0 0 0;
+        }
+
+        /* Add Payee Form */
+        .add-payee-form {
+            padding: 24px 28px;
+            background: linear-gradient(to bottom, #FAFBFC 0%, #FFFFFF 100%);
+            border-bottom: 1px solid #F1F5F9;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #475569;
+            margin-bottom: 8px;
+            letter-spacing: -0.005em;
+        }
+
+        .form-input {
+            width: 100%;
+            height: 44px;
+            padding: 0 14px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 14px;
+            color: #0F172A;
+            background: #FFFFFF;
+            border: 1.5px solid #E2E8F0;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+            outline: none;
+        }
+
+        .form-input:hover {
+            border-color: #CBD5E1;
+        }
+
+        .form-input:focus {
+            border-color: #5B5FEF;
+            box-shadow:
+                0 0 0 3px rgba(91, 95, 239, 0.2),
+                0 1px 2px rgba(0, 0, 0, 0.04);
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-primary:focus {
+            outline: none;
+            box-shadow:
+                0 0 0 3px rgba(91, 95, 239, 0.3),
+                0 1px 2px rgba(91, 95, 239, 0.24);
+            position: relative;
+            z-index: 2;
+        }
+
+        .btn-primary:focus:not(:focus-visible) {
+            box-shadow:
+                0 1px 2px rgba(91, 95, 239, 0.24),
+                0 0 0 1px rgba(91, 95, 239, 0.12);
+        }
+
+        .form-input::placeholder {
+            color: #94A3B8;
+        }
+
+        .btn-primary {
+            height: 44px;
+            padding: 0 24px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: #FFFFFF;
+            background: #5B5FEF;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow:
+                0 1px 2px rgba(91, 95, 239, 0.24),
+                0 0 0 1px rgba(91, 95, 239, 0.12);
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .form-row .btn-primary {
+            margin-top: 29px; /* Matches label height (13px) + line-height space (~8px) + margin-bottom (8px) */
+        }
+
+        .btn-primary:hover {
+            background: #4F54DB;
+            box-shadow:
+                0 4px 8px rgba(91, 95, 239, 0.24),
+                0 0 0 1px rgba(91, 95, 239, 0.16);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow:
+                0 1px 2px rgba(91, 95, 239, 0.24),
+                0 0 0 1px rgba(91, 95, 239, 0.16);
+        }
+
+        /* Payees Table */
+        .payees-table-container {
+            padding: 0;
+        }
+
+        .payees-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .payees-table thead th {
+            padding: 14px 28px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748B;
+            text-align: left;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            background: #FAFBFC;
+            border-bottom: 1px solid #F1F5F9;
+        }
+
+        .payees-table tbody tr {
+            transition: background-color 0.15s ease;
+        }
+
+        .payees-table tbody tr:hover {
+            background: #FAFBFC;
+        }
+
+        .payees-table tbody td {
+            padding: 16px 28px;
+            font-size: 14px;
+            color: #0F172A;
+            border-bottom: 1px solid #F1F5F9;
+        }
+
+        .payees-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .payee-name {
+            font-weight: 500;
+            color: #0F172A;
+        }
+
+        .payee-date {
+            color: #64748B;
+            font-size: 13px;
+        }
+
+        .payee-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            color: #64748B;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-size: 14px;
+        }
+
+        .btn-icon:hover {
+            background: #F8FAFC;
+            border-color: #CBD5E1;
+            color: #0F172A;
+        }
+
+        .btn-icon.btn-delete:hover {
+            background: #FEF2F2;
+            border-color: #FECACA;
+            color: #DC2626;
+        }
+
+        /* Empty State */
+        .empty-state {
+            padding: 64px 28px;
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: #94A3B8;
+        }
+
+        .empty-state-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #0F172A;
+            margin: 0 0 8px 0;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+            color: #64748B;
+            margin: 0;
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 14px 18px;
+            margin: 20px 28px;
+            border-radius: 8px;
+            font-size: 14px;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .alert-error {
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            color: #991B1B;
+        }
+
+        /* Loading State */
+        .htmx-request .payees-table-container {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* Payees Table Container */
+        .payees-table-container {
+            padding: 0;
+            overflow: visible;
+        }
+
+        .payees-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .payees-table thead th {
+            padding: 14px 28px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748B;
+            text-align: left;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            background: #FAFBFC;
+            border-bottom: 1px solid #F1F5F9;
+        }
+
+        .payees-table tbody tr {
+            transition: background-color 0.15s ease;
+        }
+
+        .payees-table tbody tr:hover {
+            background: #FAFBFC;
+        }
+
+        .payees-table tbody td {
+            padding: 16px 28px;
+            font-size: 14px;
+            color: #0F172A;
+            border-bottom: 1px solid #F1F5F9;
+        }
+
+        .payees-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .payee-name {
+            font-weight: 500;
+            color: #0F172A;
+        }
+
+        .payee-date {
+            color: #64748B;
+            font-size: 13px;
+        }
+
+        .payee-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            color: #64748B;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-size: 14px;
+        }
+
+        .btn-icon:hover {
+            background: #F8FAFC;
+            border-color: #CBD5E1;
+            color: #0F172A;
+        }
+
+        .btn-icon.btn-delete:hover {
+            background: #FEF2F2;
+            border-color: #FECACA;
+            color: #DC2626;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="settings-container">
+            <!-- Header -->
+            <div class="settings-header">
+                <h1 class="settings-title">Settings</h1>
+                <p class="settings-subtitle">Manage your payees and application preferences</p>
+            </div>
+
+            <!-- Payees Section -->
+            <div class="settings-section">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">Payees</h2>
+                        <p class="section-description">Manage recipients for your payments</p>
+                    </div>
+                </div>
+
+                <!-- Add Payee Form -->
+                <div class="add-payee-form">
+                    <form hx-post="/balancetracker/settings/payees"
+                          hx-target="#payees-table-wrapper"
+                          hx-swap="outerHTML">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="payee-name">Payee Name</label>
+                                <input type="text"
+                                       id="payee-name"
+                                       name="name"
+                                       class="form-input"
+                                       placeholder="Enter payee name (e.g., Electric Company)"
+                                       required
+                                       autocomplete="off">
+                            </div>
+                            <button type="submit" class="btn-primary">
+                                <i class="bi bi-plus-lg"></i>
+                                Add Payee
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Error Message -->
+                <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+                <!-- Payees Table -->
+                <div th:replace="~{settings/fragments/payees-table :: payees-table}"></div>
+            </div>
+        </div>
+    </div>
+
+    <script layout:fragment="scripts">
+        // Clear form after successful submission
+        document.body.addEventListener('htmx:afterSwap', function(event) {
+            if (event.detail.target.id === 'payees-table-wrapper') {
+                // Clear the form input
+                const form = document.querySelector('.add-payee-form form');
+                if (form) {
+                    form.reset();
+                }
+
+                // Check if there's an error message and show it in a modal
+                const errorAlert = document.querySelector('#payees-table-wrapper .alert-error');
+                if (errorAlert) {
+                    const errorMessage = errorAlert.textContent;
+                    // Show error in an alert modal (no Cancel button needed)
+                    openConfirmModal(
+                        errorMessage,
+                        '<i class="bi bi-check-lg"></i> Got it',
+                        function() {
+                            // Just close the modal
+                        },
+                        false,
+                        false  // Hide Cancel button
+                    );
+                }
+            }
+        });
+
+        // Delete payee with confirmation
+        function confirmDeletePayee(button) {
+            const payeeId = button.getAttribute('data-payee-id');
+            const payeeName = button.getAttribute('data-payee-name');
+            const deleteUrl = button.getAttribute('data-delete-url');
+
+            openConfirmModal(
+                'Are you sure you want to delete "' + payeeName + '"? This action cannot be undone.',
+                '<i class="bi bi-trash"></i> Delete',
+                function() {
+                    // Send DELETE request using htmx
+                    htmx.ajax('DELETE', deleteUrl, {
+                        target: '#payees-table-wrapper',
+                        swap: 'outerHTML'
+                    });
+                },
+                true
+            );
+        }
+
+        // Inline editing for payees using modal
+        function editPayee(button) {
+            const payeeId = button.getAttribute('data-payee-id');
+            const currentName = button.getAttribute('data-payee-name');
+
+            openEditModal('Edit Payee', currentName, function(newName) {
+                if (newName && newName.trim() !== '' && newName !== currentName) {
+                    // Send PUT request using htmx
+                    htmx.ajax('PUT', '/balancetracker/settings/payees/' + payeeId, {
+                        target: '#payees-table-wrapper',
+                        swap: 'outerHTML',
+                        values: { name: newName.trim() }
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+</html>

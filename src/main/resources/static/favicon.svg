@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <!-- Radial gradient for depth -->
+    <radialGradient id="bgRadial" cx="50%" cy="30%" r="80%">
+      <stop offset="0%" style="stop-color:#6366F1;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#4F46E5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3730A3;stop-opacity:1" />
+    </radialGradient>
+
+    <!-- Metallic gold gradient -->
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FCD34D;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FBBF24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Cyan accent -->
+    <linearGradient id="cyanGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#67E8F9;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#06B6D4;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- White shine -->
+    <linearGradient id="shineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#F0F9FF;stop-opacity:0.7" />
+    </linearGradient>
+
+    <!-- Shadow blur -->
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feOffset dx="0" dy="2" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Inner glow -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background with subtle texture -->
+  <rect width="64" height="64" rx="14" fill="url(#bgRadial)"/>
+
+  <!-- Subtle noise texture overlay -->
+  <rect width="64" height="64" rx="14" fill="#1E293B" opacity="0.05"/>
+
+  <!-- Balance scale base - geometric and precise -->
+  <g filter="url(#shadow)">
+    <!-- Central pillar (isometric) -->
+    <path d="M 32 45 L 32 28 L 34 27 L 34 44 Z" fill="url(#shineGradient)" opacity="0.95"/>
+    <path d="M 30 45 L 30 28 L 32 27 L 32 44 Z" fill="#E0E7FF" opacity="0.8"/>
+
+    <!-- Base platform -->
+    <ellipse cx="32" cy="45" rx="8" ry="2.5" fill="url(#goldGradient)"/>
+    <ellipse cx="32" cy="44.5" rx="7" ry="2" fill="#FEF3C7" opacity="0.6"/>
+  </g>
+
+  <!-- Horizontal beam (isometric perspective) -->
+  <g filter="url(#glow)">
+    <!-- Main beam -->
+    <rect x="14" y="26" width="36" height="3" rx="1.5" fill="url(#shineGradient)"/>
+    <rect x="14" y="26" width="36" height="1.5" rx="0.75" fill="#FFFFFF" opacity="0.6"/>
+
+    <!-- Center hub -->
+    <circle cx="32" cy="27.5" r="3.5" fill="url(#goldGradient)"/>
+    <circle cx="32" cy="27.5" r="2.5" fill="#FFFBEB" opacity="0.7"/>
+    <circle cx="32" cy="27.5" r="1.5" fill="url(#cyanGradient)"/>
+  </g>
+
+  <!-- Left pan (higher - representing surplus) -->
+  <g filter="url(#shadow)">
+    <!-- Suspension chain -->
+    <line x1="18" y1="28" x2="18" y2="18" stroke="#E0E7FF" stroke-width="0.8" opacity="0.6"/>
+
+    <!-- Pan -->
+    <path d="M 11 18 Q 11 16 13 16 L 23 16 Q 25 16 25 18 L 24 20 L 12 20 Z"
+          fill="url(#cyanGradient)" opacity="0.95"/>
+    <ellipse cx="18" cy="20" rx="6.5" ry="1.5" fill="url(#cyanGradient)" opacity="0.8"/>
+
+    <!-- Dollar symbol -->
+    <text x="18" y="19" font-family="'SF Pro', system-ui, sans-serif"
+          font-size="7" font-weight="800" fill="#FFFFFF"
+          text-anchor="middle" letter-spacing="-0.5">$</text>
+  </g>
+
+  <!-- Right pan (lower - representing expenses) -->
+  <g filter="url(#shadow)">
+    <!-- Suspension chain -->
+    <line x1="46" y1="28" x2="46" y2="23" stroke="#E0E7FF" stroke-width="0.8" opacity="0.6"/>
+
+    <!-- Pan -->
+    <path d="M 39 23 Q 39 21 41 21 L 51 21 Q 53 21 53 23 L 52 25 L 40 25 Z"
+          fill="url(#goldGradient)" opacity="0.95"/>
+    <ellipse cx="46" cy="25" rx="6.5" ry="1.5" fill="url(#goldGradient)" opacity="0.8"/>
+
+    <!-- Coins stack representation -->
+    <circle cx="44" cy="24" r="1.8" fill="#FFFBEB" opacity="0.9"/>
+    <circle cx="46" cy="24" r="1.8" fill="#FFFBEB" opacity="0.9"/>
+    <circle cx="48" cy="24" r="1.8" fill="#FFFBEB" opacity="0.9"/>
+  </g>
+
+  <!-- Highlight accent (top-left light reflection) -->
+  <circle cx="20" cy="16" r="3" fill="#FFFFFF" opacity="0.15"/>
+  <circle cx="48" cy="12" r="2" fill="#67E8F9" opacity="0.2"/>
+
+  <!-- Subtle edge highlight -->
+  <rect width="64" height="64" rx="14" fill="none"
+        stroke="url(#shineGradient)" stroke-width="0.5" opacity="0.3"/>
+</svg>

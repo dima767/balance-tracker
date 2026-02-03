@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Payment Period Details</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 class="page-title">
+                    Payment Period - <span th:text="${#temporals.format(paymentPeriod.periodDate, 'MMMM dd, yyyy')}">January 01, 2024</span>
+                </h1>
+                <p class="page-subtitle">
+                    Created on <span th:text="${#temporals.format(paymentPeriod.createdAt, 'MMM dd, yyyy HH:mm')}">Jan 01, 2024 10:30</span>
+                </p>
+            </div>
+            <div>
+                <a th:href="@{/payment-periods}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i>
+                    Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 320px; gap: 24px;">
+        <!-- Main Content -->
+        <div>
+            <!-- Payment Period Info Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Period Information</h2>
+                </div>
+                <div class="card-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Period Date</span>
+                            <span class="period-date-display">
+                                <span class="period-date-icon period-date-icon-small">
+                                    <i class="bi bi-calendar-event"></i>
+                                </span>
+                                <span th:text="${#temporals.format(paymentPeriod.periodDate, 'MMMM dd, yyyy')}">January 01, 2024</span>
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Starting Balance</span>
+                            <span class="amount-display amount-display-large amount-pill amount-pill-large amount-pill-starting">
+                                <span class="currency-code currency-code-large" th:text="${paymentPeriod.startingBalance.currency.currencyCode}">USD</span>
+                                <span class="amount-value" th:text="${#numbers.formatDecimal(paymentPeriod.startingBalance.number, 1, 2)}">1,000.00</span>
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Total Payments</span>
+                            <span class="amount-display amount-display-large amount-pill amount-pill-large amount-pill-payments">
+                                <span class="currency-code currency-code-large" th:text="${paymentPeriod.getTotalPayments().currency.currencyCode}">USD</span>
+                                <span class="amount-value" th:text="${#numbers.formatDecimal(paymentPeriod.getTotalPayments().number, 1, 2)}">250.00</span>
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Ending Balance</span>
+                            <span class="amount-display amount-display-large amount-pill amount-pill-large amount-pill-ending">
+                                <span class="currency-code currency-code-large" th:text="${paymentPeriod.endingBalance.currency.currencyCode}">USD</span>
+                                <span class="amount-value"
+                                      th:text="${#numbers.formatDecimal(paymentPeriod.endingBalance.number, 1, 2)}"
+                                      th:classappend="${paymentPeriod.endingBalance.isNegative() ? 'amount-negative' : 'amount-positive'}">750.00</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Items Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Payment Items (<span id="payment-items-count" th:text="${paymentPeriod.paymentItems.size()}">0</span>)</h2>
+                </div>
+                <div class="card-body">
+                    <!-- Use the fragment to ensure consistent rendering -->
+                    <div th:replace="~{payment-periods/fragments/payment-items-table :: payment-items-table}"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar - Summary -->
+        <div>
+            <div class="summary-box">
+                <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--text-secondary);">SUMMARY</h3>
+
+                <div class="summary-item">
+                    <span class="summary-label">Starting Balance</span>
+                    <span class="summary-value amount-display">
+                        <span class="currency-code" th:text="${paymentPeriod.startingBalance.currency.currencyCode}">USD</span>
+                        <span class="amount-value" th:text="${#numbers.formatDecimal(paymentPeriod.startingBalance.number, 1, 2)}">1,000.00</span>
+                    </span>
+                </div>
+
+                <div class="summary-item">
+                    <span class="summary-label">Total Payments</span>
+                    <span class="summary-value amount-display">
+                        <span class="currency-code" th:text="${paymentPeriod.getTotalPayments().currency.currencyCode}">USD</span>
+                        <span class="amount-value" th:text="${#numbers.formatDecimal(paymentPeriod.getTotalPayments().number, 1, 2)}">250.00</span>
+                    </span>
+                </div>
+
+                <div class="summary-item" style="padding-top: 16px; margin-top: 16px; border-top: 2px solid var(--border-color);">
+                    <span class="summary-label" style="font-weight: 600; color: var(--text-primary);">Ending Balance</span>
+                    <span class="summary-value summary-total amount-display amount-display-xlarge">
+                        <span class="currency-code currency-code-large" th:text="${paymentPeriod.endingBalance.currency.currencyCode}">USD</span>
+                        <span class="amount-value"
+                              th:text="${#numbers.formatDecimal(paymentPeriod.endingBalance.number, 1, 2)}"
+                              th:classappend="${paymentPeriod.endingBalance.isNegative() ? 'amount-negative' : 'amount-positive'}">750.00</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <a th:href="@{/payment-periods/{id}/edit(id=${paymentPeriod.id})}" class="btn btn-primary" style="width: 100%; margin-bottom: 8px;">
+                        <i class="bi bi-pencil"></i>
+                        Edit Period
+                    </a>
+                    <button class="btn btn-danger"
+                            style="width: 100%;"
+                            th:attr="data-delete-url=@{/payment-periods/{id}/delete(id=${paymentPeriod.id})}"
+                            onclick="confirmDeletePaymentPeriod(this)">
+                        <i class="bi bi-trash"></i>
+                        Delete Period
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script layout:fragment="scripts">
+    // Update payment items count after htmx swap
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+        if (event.detail.target.id === 'payment-items-table') {
+            // Count the payment items in the updated table
+            const itemsCount = document.querySelectorAll('.payment-items-table tbody tr').length;
+            const countSpan = document.getElementById('payment-items-count');
+            if (countSpan) {
+                countSpan.textContent = itemsCount;
+            }
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+# ╔════════════════════════════════════════════════════════════╗
+# ║  BALANCE TRACKER - Docker Build Context Exclusions         ║
+# ╚════════════════════════════════════════════════════════════╝
+
+# Git
+.git
+.gitignore
+
+# Gradle build output (we rebuild inside Docker)
+build/
+.gradle/
+
+# IDE files
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.classpath
+.project
+
+# Logs
+logs/
+*.log
+
+# Environment files (security)
+.env
+.env.local
+.env.*.local
+
+# Documentation
+*.md
+!README.md
+
+# Docker files (prevent recursive copy)
+Dockerfile
+docker-compose*.yml
+
+# macOS
+.DS_Store
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Test output
+test-results/
+test-output/
