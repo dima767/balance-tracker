@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '4.0.0'
+    id 'org.springframework.boot' version '4.0.3'
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -12,6 +12,8 @@ java {
         languageVersion = JavaLanguageVersion.of(25)
     }
 }
+
+ext['groovy.version'] = '5.0.3'
 
 repositories {
     mavenCentral()
@@ -32,7 +34,7 @@ dependencies {
     implementation 'org.javamoney:moneta:1.4.4'
 
     // Thymeleaf Layout Dialect
-    implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect:3.3.0'
+    implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect:3.4.0'
 
     // Development Tools
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
