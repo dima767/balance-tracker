@@ -70,4 +70,8 @@ replay_pid*
 # Docker generated certificates (persistent in volumes)
 # Note: src/main/resources/ssl/ keystore IS tracked for local dev
 
+#Claude
 docs/market-analysis-2026.md
+.claude/
+CLAUDE.md
+
