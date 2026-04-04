@@ -94,7 +94,7 @@ echo "╚═══════════════════════�
 echo ""
 
 # Default Java options for containers
-DEFAULT_JAVA_OPTS="-Xms256m -Xmx512m"
+DEFAULT_JAVA_OPTS="-Xms512m -Xmx1g"
 
 # Java 25 requires these flags for Spring Boot
 JAVA_25_OPTS="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED"

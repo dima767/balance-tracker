@@ -58,12 +58,12 @@ RUN chmod +x /app/docker-entrypoint.sh && \
 USER balancetracker
 
 # Expose ports: HTTPS (8443) and HTTP (8080)
-EXPOSE 8443 8080
+EXPOSE 8243 8082
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f -k https://localhost:8443/balancetracker/actuator/health 2>/dev/null || \
-        curl -f http://localhost:8080/balancetracker/actuator/health 2>/dev/null || exit 1
+    CMD curl -f -k https://localhost:8243/balancetracker/actuator/health 2>/dev/null || \
+        curl -f http://localhost:8082/balancetracker/actuator/health 2>/dev/null || exit 1
 
 # Use entrypoint for certificate generation
 ENTRYPOINT ["/app/docker-entrypoint.sh"]

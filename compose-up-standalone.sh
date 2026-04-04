@@ -30,8 +30,8 @@ echo "╚═══════════════════════�
 echo ""
 
 # Load environment variables for port display
-APP_HTTPS_PORT="${APP_HTTPS_PORT:-8443}"
-APP_HTTP_PORT="${APP_HTTP_PORT:-8080}"
+APP_HTTPS_PORT="${APP_HTTPS_PORT:-8243}"
+APP_HTTP_PORT="${APP_HTTP_PORT:-8082}"
 
 # Check for .env file and source it
 if [ -f .env ]; then
@@ -40,8 +40,8 @@ if [ -f .env ]; then
     set -a
     source .env
     set +a
-    APP_HTTPS_PORT="${APP_HTTPS_PORT:-8443}"
-    APP_HTTP_PORT="${APP_HTTP_PORT:-8080}"
+    APP_HTTPS_PORT="${APP_HTTPS_PORT:-8243}"
+    APP_HTTP_PORT="${APP_HTTP_PORT:-8082}"
 else
     echo "  No .env file found, using defaults"
     echo "  Tip: Copy .env.example to .env to customize"
